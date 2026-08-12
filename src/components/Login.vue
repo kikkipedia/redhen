@@ -61,18 +61,20 @@ async function login() {
   const user = await loginUser(email.value, password.value)
   setUser(user.displayName)
   store.user = user.displayName
+  store.uid = user.uid
   emit('close')
 }
 
 async function loginWithGoogle() {
-  const user = await signInWithGoogle()
-  console.log('Inloggad som:', user.displayName)
+  const user = await signInWithGoogle() 
+  store.user = user.displayName
+  store.uid = user.uid
   setUser(user.displayName)
-    store.user = user.displayName
   emit('close')
 }
 
 const setUser = (user) => {
   localStorage.setItem('user', user)
+  localStorage.setItem('uid', store.uid)
 }
 </script>

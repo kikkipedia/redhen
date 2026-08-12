@@ -186,3 +186,32 @@ export async function loginUser(email, password) {
     }
   }
 }
+
+export async function saveReport(reportData) {
+  try {
+    const reportRef = doc(db, "reports", reportData.id);
+    await setDoc(reportRef, {
+      ...reportData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Could not save report:", error);
+    throw new Error("Could not save report.");
+  }
+}
+
+export async function fetchReports() {
+  try {
+    const reportsSnapshot = await getDocs(collection(db, "reports"));
+    const reports = reportsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    return reports;
+  } catch (error) {
+    console.error("Could not fetch reports:", error);
+    throw new Error("Could not fetch reports.");
+  }
+}

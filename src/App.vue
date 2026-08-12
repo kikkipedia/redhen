@@ -7,13 +7,20 @@ import { useStore } from './stores/index.js'
 
 const store = useStore()
 
+//on mounted, check if user and uid are stored in localStorage, if so, set them in the store, else, redirect to login page
 onMounted(() => {
   const storedUser = localStorage.getItem('user')
-
-  if (storedUser) {
+  const storedUid = localStorage.getItem('uid')
+  if (storedUser && storedUid) {
     user.value = storedUser
     //set in store
     store.user = storedUser
+    store.uid = storedUid
+  }
+  else {
+    localStorage.removeItem('uid')
+    localStorage.removeItem('user')
+    window.location.href = '/'
   }
 })
 

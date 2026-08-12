@@ -106,6 +106,7 @@ async function submitReport() {
       eggs: eggs.value,
       notes: notes.value.trim(),
       date: new Date(),
+      userId: store.user?.uid || null,
     }
 
     console.log('Chicken report:', report)
