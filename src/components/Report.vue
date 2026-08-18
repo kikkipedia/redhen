@@ -63,11 +63,50 @@
       Rapportera 🐓
     </v-btn>
   </v-card>
+
+  <v-overlay
+    v-model="reportsOpen"
+    persistent
+  >
+    <v-card
+      class="align-center justify-center pa-1 ma-4"
+      rounded="lg"
+      elevation="3"
+    >
+      <v-card-title>Rapporter</v-card-title>
+      <v-card-text>
+        <Reports/>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn
+          color="primary"
+          variant="outlined"
+          @click="reportsOpen = false"
+        >
+          Stäng
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-overlay>
+
+  <v-btn
+    block
+    color="primary"
+    size="large"
+    variant="outlined"
+    class="mt-4"
+    @click="reportsOpen = !reportsOpen"
+  >
+    Öppna rapporter 🐓
+  </v-btn>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useStore } from '../stores/index.js'
+import Reports from '@/views/Reports.vue'
+import { saveReport } from '@/db.js'
 
 const store = useStore()
 
@@ -76,14 +115,12 @@ const notes = ref('')
 
 const loading = ref(false)
 const successMessage = ref('')
-
-import { onMounted } from 'vue'
+const reportsOpen = ref(false)
+const updateReport = ref(false)
 
 onMounted(() => {
   // Load todays report if it exists 
-  if (store.reportExists) {
-    // Load the report data here
-  }
+  //and add update button if it does
 })
 
 function increaseEggs() {
@@ -102,17 +139,14 @@ async function submitReport() {
 
   try {
     const report = {
-      uid: store.user?.uid || null,
       eggs: eggs.value,
       notes: notes.value.trim(),
       date: new Date(),
-      userId: store.user?.uid || null,
+      userId: localStorage.getItem('uid') || ' ',
     }
 
     console.log('Chicken report:', report)
-
-    // Later:
-    // await saveChickenReport(report)
+    await saveReport(report)
 
     successMessage.value = 'Dagens rapport har sparats.'
     store.reportExists = true
@@ -157,4 +191,5 @@ function resetForm() {
   font-size: 1.1rem;
   font-weight: 600;
 }
+
 </style>

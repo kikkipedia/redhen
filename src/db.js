@@ -7,7 +7,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 
-import {doc, setDoc, serverTimestamp } from "firebase/firestore";
+import {doc, setDoc, serverTimestamp, getDocs, collection, addDoc } from "firebase/firestore";
 
 export async function registerUser({
   email,
@@ -187,15 +187,30 @@ export async function loginUser(email, password) {
   }
 }
 
+export function getDate(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
 export async function saveReport(reportData) {
+  const id = getDate();
+
   try {
-    const reportRef = doc(db, "reports", reportData.id);
+    const reportRef = doc(db, "reports", id);
+
     await setDoc(reportRef, {
       ...reportData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-    return { success: true };
+
+    return {
+      success: true,
+      reportId: id,
+    };
   } catch (error) {
     console.error("Could not save report:", error);
     throw new Error("Could not save report.");
