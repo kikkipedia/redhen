@@ -20,7 +20,7 @@ onMounted(() => {
   else {
     localStorage.removeItem('uid')
     localStorage.removeItem('user')
-    window.location.href = '/'
+    //window.location.href = '/'
   }
 })
 

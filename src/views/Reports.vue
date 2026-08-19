@@ -15,32 +15,42 @@
       />
     </div>
 
-    <div class="week-grid px-2">
+    <div class="week-grid px-2 scrollable">
       <v-card
         v-for="day in currentWeek"
         :key="day.date"
+        color="primary"
         variant="tonal"
-        class="day-card text-center pa-2"
+        class="day-card pa-2"
         @click="openDay(day)"
       >
-        <div class="text-caption text-uppercase">
-          {{ day.weekday }}
-        </div>
+      <v-container class="pa-0" fluid>
+        <v-row class="align-start justify-space-between">
+          <v-col class="date" cols="2">
+          <div class="text-caption text-uppercase">
+            {{ day.weekday }}
+          </div>
 
-        <div class="text-body-1 font-weight-bold">
-          {{ day.day }}
-        </div>
-
-        <div class="mt-2">
-          🥚 {{ day.entry?.eggs ?? "" }}
-        </div>
-
-        <v-icon
-          v-if="day.entry?.note"
-          icon="mdi-note-text-outline"
-          size="small"
-          class="mt-1"
-        />
+          <div class="text-body-1 font-weight-bold">
+            {{ day.day }}
+          </div>
+          </v-col>
+           <v-col cols="2">
+          🥚 {{ day.entry?.eggs ?? 0 }}
+        </v-col>
+        <v-col>
+          <span v-if="day.entry?.notes" class="report-text">
+            {{ day.entry.notes }}
+          </span>
+          <span
+            v-if="day.entry?.userId"
+            class="report-text"
+          >
+            / {{ userNames[day.entry.userId] ?? '' }}
+          </span>
+        </v-col>
+        </v-row>
+      </v-container>
       </v-card>
     </div>
 
@@ -70,21 +80,42 @@
 
 <script setup>
 import { onMounted, ref, computed } from 'vue';
-import { fetchReports, getDate } from '../db';
+import { fetchReports, getDate, fetchUserData } from '../db';
 
 const reports = ref([]);
 const weekOffset = ref(0);
 const sheet = ref(false);
 const selectedDay = ref(null);
 const currentWeek = ref([]);
+const userNames = ref({});
 
 onMounted(async () => {
   reports.value = await fetchReports();
-
-  console.log('Reports:', reports.value);
-
+  await loadUserNames();
   currentWeek.value = getCurrentWeek();
 });
+
+async function loadUserNames() {
+  const userIds = [
+    ...new Set(
+      reports.value
+        .map(report => report.userId)
+        .filter(Boolean)
+    )
+  ];
+
+  for (const userId of userIds) {
+    try {
+      const userData = await fetchUserData(userId);
+
+      userNames.value[userId] =
+        userData.displayName || 'Unknown User';
+    } catch (error) {
+      console.error('Could not fetch user:', userId, error);
+      userNames.value[userId] = 'Unknown User';
+    }
+  }
+}
 
 function getCurrentWeek() {
   const today = new Date();
@@ -104,7 +135,6 @@ function getCurrentWeek() {
   date.setDate(startOfWeek.getDate() + i);
 
   const dateId = getDate(date);
-
   const reportEntry = reports.value.find(
     entry => entry.id === dateId
   );
@@ -162,18 +192,16 @@ const weekLabel = computed(() => {
     day: 'numeric',
   })}`;
 });
+
 </script>
 
-<style scoped>
+<style>
 .week-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  /*grid-template-columns: repeat(7, minmax(0, 1fr)); */
   gap: 4px;
 }
 
-.day-card {
-  min-width: 0;
-}
 
 .text-caption {
   font-size: 0.65rem;
@@ -182,5 +210,18 @@ const weekLabel = computed(() => {
 
 .v-card-text {
   padding: 0;
+}
+
+.v-overlay__content {
+  width: 100%;
+}
+
+.scrollable {
+  overflow-y: auto;
+  max-height: 70%;
+}
+
+.report-text {
+  font-size: 12px !important;
 }
 </style>

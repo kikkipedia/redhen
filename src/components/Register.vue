@@ -26,7 +26,7 @@
     <v-form @submit.prevent="register">
       <v-text-field
         v-model="displayName"
-        label="Visningsnamn"
+        label="Namn"
         type="text"
         prepend-inner-icon="mdi-account"
         variant="outlined"

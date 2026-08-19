@@ -7,24 +7,20 @@ import {
   updateProfile,
 } from "firebase/auth";
 
-import {doc, setDoc, serverTimestamp, getDocs, collection, addDoc } from "firebase/firestore";
+import {doc, setDoc, serverTimestamp, getDocs, collection, addDoc, getDoc } from "firebase/firestore";
 
 export async function registerUser({
   email,
   password,
   displayName,
 }) {
-
   const cleanEmail = email.trim().toLowerCase();
-
   if (!cleanEmail) {
     throw new Error("Ange email");
   }
-
   if (!password) {
     throw new Error("Ange lösenord");
   }
-
   try {
     // Create the Firebase Authentication account.
     const userCredential = await createUserWithEmailAndPassword(
@@ -228,5 +224,19 @@ export async function fetchReports() {
   } catch (error) {
     console.error("Could not fetch reports:", error);
     throw new Error("Could not fetch reports.");
+  }
+}
+
+export async function fetchUserData(uid) {
+  try {
+    const userDoc = await getDoc(doc(db, "users", uid));
+    if (userDoc.exists()) {
+      return userDoc.data();
+    } else {
+      throw new Error("User data not found.");
+    }
+  } catch (error) {
+    console.error("Could not fetch user data:", error);
+    throw new Error("Could not fetch user data.");
   }
 }

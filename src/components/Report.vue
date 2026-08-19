@@ -69,11 +69,11 @@
     persistent
   >
     <v-card
-      class="align-center justify-center pa-1 ma-4"
+      class="align-center justify-center pa-1 ma-4 reports-card"
       rounded="lg"
       elevation="3"
     >
-      <v-card-title>Rapporter</v-card-title>
+      <!-- <v-card-title>Rapporter</v-card-title> -->
       <v-card-text>
         <Reports/>
       </v-card-text>
@@ -192,4 +192,7 @@ function resetForm() {
   font-weight: 600;
 }
 
+.overlay__content {
+  width: 100%;
+}
 </style>
