@@ -8,12 +8,13 @@
 
     <Calendar/>
 
-    <div class="report-row">
+    <div class="report-row mt-4">
       <div class="egg-stepper">
         <v-btn
           icon="mdi-minus"
           size="small"
           variant="tonal"
+          color="primary"
           :disabled="eggs <= 0"
           @click="decreaseEggs"
         />
@@ -26,6 +27,7 @@
           icon="mdi-plus"
           size="small"
           variant="tonal"
+          color="primary"
           @click="increaseEggs"
         />
       </div>
@@ -55,8 +57,7 @@
     </v-alert>
 
     <v-btn
-      block
-      color="primary"
+      color="secondary"
       size="large"
       :loading="loading"
       :disabled="loading"
@@ -136,6 +137,7 @@ function resetForm() {
   min-height: 52px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 14px;
   margin-bottom: 8px;
 }

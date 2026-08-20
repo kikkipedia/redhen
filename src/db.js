@@ -5,6 +5,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   updateProfile,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 
 import {doc, setDoc, serverTimestamp, getDocs, collection, addDoc, getDoc } from "firebase/firestore";
@@ -238,5 +239,44 @@ export async function fetchUserData(uid) {
   } catch (error) {
     console.error("Could not fetch user data:", error);
     throw new Error("Could not fetch user data.");
+  }
+}
+
+export async function resetPassword(email) {
+  const cleanEmail = email.trim().toLowerCase();
+
+  if (!cleanEmail) {
+    throw new Error("Ange email");
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, cleanEmail);
+
+    return {
+      success: true,
+      message: "Ett återställningsmail har skickats.",
+    };
+  } catch (error) {
+    console.error("Could not send password reset email:", error);
+
+    switch (error.code) {
+      case "auth/invalid-email":
+        throw new Error("Ogiltig e-postadress.");
+
+      case "auth/too-many-requests":
+        throw new Error(
+          "För många försök. Vänta en stund och försök igen."
+        );
+
+      case "auth/network-request-failed":
+        throw new Error(
+          "Nätverksfel. Kontrollera internetanslutningen."
+        );
+
+      default:
+        throw new Error(
+          error.message || "Kunde inte skicka återställningsmail."
+        );
+    }
   }
 }

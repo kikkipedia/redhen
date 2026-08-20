@@ -17,6 +17,10 @@ onMounted(() => {
     store.user = storedUser
     store.uid = storedUid
   }
+  if (storedUser == null || storedUid == null) {
+    localStorage.removeItem('uid')
+    localStorage.removeItem('user')
+  }
   else {
     localStorage.removeItem('uid')
     localStorage.removeItem('user')

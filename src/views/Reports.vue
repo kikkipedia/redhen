@@ -70,7 +70,7 @@
           </div>
 
           <div v-else class="text-medium-emphasis">
-            No note for this day.
+            
           </div>
         </v-card-text>
       </v-card>

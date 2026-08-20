@@ -4,18 +4,18 @@
   </div>
 
   <div v-else class="auth">
-    <v-btn @click="showLogin = true">
+    <v-btn @click="showLogin = true" color="primary" variant="outlined">
       Logga in
     </v-btn>
 
-    <v-btn @click="showRegister = true">
+    <v-btn @click="showRegister = true" color="secondary">
       Registrera
     </v-btn>
   </div>
 
   <v-dialog
     v-model="showLogin"
-    max-width="500"
+    width="500"
   >
     <v-sheet
       class="pa-6 position-relative"
@@ -81,7 +81,7 @@ onMounted(() => {
 
 <style>
 .auth {
-  min-height: 100vh;
+
   display: flex;
   flex-direction: column;
   padding-top: 5rem;
@@ -96,7 +96,8 @@ onMounted(() => {
   z-index: 1;
 }
 
-.v-dialog > .v-overlay__content {
-  min-height: 80vh;
+.v-dialog .v-overlay__content {
+
+  margin: 50 auto;
 }
 </style>

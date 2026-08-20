@@ -9,12 +9,12 @@
         <v-fab
             icon="mdi-calendar-clock"
             color="secondary"
-            variant="text"
+            variant="plain"
         />
         <v-fab
             icon="mdi-finance"
             color="secondary"
-            variant="text"
+            variant="plain"
         />
     </nav>
     <Report/>
@@ -27,14 +27,13 @@
       rounded="lg"
       elevation="3"
     >
-      <!-- <v-card-title>Rapporter</v-card-title> -->
       <v-card-text>
         <Reports/>
       </v-card-text>
       <v-card-actions>
         <v-spacer />
         <v-btn
-          color="primary"
+          color="secondary"
           variant="outlined"
           @click="reportsOpen = false"
         >

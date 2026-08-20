@@ -7,7 +7,7 @@
       <v-date-input
         class="date-input"
         v-model="selectedDate"
-        label="Välj datum"
+        label="Välj annat datum"
         locale="sv"
         variant="outlined"
         color="primary"
@@ -50,8 +50,7 @@ const formattedDate = computed(() => {
 }
 
 .selected-date {
-  font-size: 1.1rem;
-  font-weight: bold;
+  font-size: 1rem;
   margin-bottom: 1rem;
   color: #c52850;
 }
