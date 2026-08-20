@@ -20,7 +20,6 @@ onMounted(() => {
   else {
     localStorage.removeItem('uid')
     localStorage.removeItem('user')
-    //window.location.href = '/'
   }
 })
 
@@ -37,6 +36,6 @@ onMounted(() => {
 
 <style scoped>
 h2 {
-  margin-top: 1rem;
+  margin: 1rem 0 0.25rem;
 }
 </style>

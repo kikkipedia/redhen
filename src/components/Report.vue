@@ -1,10 +1,12 @@
 <template>
   <v-card
-    class="ma-4 pa-6"
+    class="ma-4 pa-6 mx-auto"
     max-width="420"
     rounded="lg"
     elevation="3"
   >
+
+    <Calendar/>
 
     <div class="report-row">
       <div class="egg-stepper">
@@ -64,49 +66,14 @@
     </v-btn>
   </v-card>
 
-  <v-overlay
-    v-model="reportsOpen"
-    persistent
-  >
-    <v-card
-      class="align-center justify-center pa-1 ma-4 reports-card"
-      rounded="lg"
-      elevation="3"
-    >
-      <!-- <v-card-title>Rapporter</v-card-title> -->
-      <v-card-text>
-        <Reports/>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer />
-        <v-btn
-          color="primary"
-          variant="outlined"
-          @click="reportsOpen = false"
-        >
-          Stäng
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-overlay>
 
-  <v-btn
-    block
-    color="primary"
-    size="large"
-    variant="outlined"
-    class="mt-4"
-    @click="reportsOpen = !reportsOpen"
-  >
-    Öppna rapporter 🐓
-  </v-btn>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useStore } from '../stores/index.js'
-import Reports from '@/views/Reports.vue'
 import { saveReport } from '@/db.js'
+import Calendar from './Calendar.vue'
 
 const store = useStore()
 
@@ -115,7 +82,7 @@ const notes = ref('')
 
 const loading = ref(false)
 const successMessage = ref('')
-const reportsOpen = ref(false)
+
 const updateReport = ref(false)
 
 onMounted(() => {

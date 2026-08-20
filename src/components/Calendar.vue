@@ -3,16 +3,19 @@
     <div v-if="selectedDate" class="selected-date">
      {{ formattedDate }}
     </div>
-   <v-date-input
+    <div class="d-flex justify-center">
+      <v-date-input
+        class="date-input"
         v-model="selectedDate"
         label="Välj datum"
         locale="sv"
         variant="outlined"
-        class="mt-4"
+        color="primary"
         prepend-icon=""
+        prepend-inner-icon="$calendar"
         @click:clear="resetToToday"
-        />
-
+      />
+    </div>
   </div>
 
   <!-- todo; add icon that opens a more deytailed calendar for full month-->
@@ -50,5 +53,10 @@ const formattedDate = computed(() => {
   font-size: 1.1rem;
   font-weight: bold;
   margin-bottom: 1rem;
+  color: #c52850;
+}
+
+.date-input {
+  width: 80%;
 }
 </style>

@@ -19,7 +19,7 @@
       <v-card
         v-for="day in currentWeek"
         :key="day.date"
-        color="primary"
+        color="default"
         variant="tonal"
         class="day-card pa-2"
         @click="openDay(day)"
