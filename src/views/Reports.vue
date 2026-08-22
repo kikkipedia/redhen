@@ -19,10 +19,9 @@
       <v-card
         v-for="day in currentWeek"
         :key="day.date"
-        color="default"
-        variant="tonal"
+        color="secondary"
+        variant="outlined"
         class="day-card pa-2"
-        @click="openDay(day)"
       >
       <v-container class="pa-0" fluid>
         <v-row class="align-start justify-space-between">
@@ -36,51 +35,33 @@
           </div>
           </v-col>
            <v-col cols="2">
-          🥚 {{ day.entry?.eggs ?? 0 }}
+          🥚 {{ day.entries.reduce((sum, entry) => sum + (entry.eggs || 0), 0) }}
         </v-col>
         <v-col>
-          <span v-if="day.entry?.notes" class="report-text">
-            {{ day.entry.notes }}
-          </span>
-          <span
-            v-if="day.entry?.userId"
+          <div
+            v-for="entry in day.entries"
+            :key="entry.id"
             class="report-text"
           >
-            / {{ userNames[day.entry.userId] ?? '' }}
-          </span>
+            <span v-if="entry.notes">
+              {{ entry.notes }}
+            </span>
+
+            <span v-if="entry.userId">
+              / {{ userNames[entry.userId] ?? '' }}
+            </span>
+          </div>
         </v-col>
         </v-row>
       </v-container>
       </v-card>
     </div>
-
-    <v-bottom-sheet v-model="sheet">
-      <v-card v-if="selectedDay" class="pa-4">
-        <v-card-title>
-          {{ selectedDay.fullDate }}
-        </v-card-title>
-
-        <v-card-text>
-          <div class="text-h5 mb-3">
-            🥚 {{ selectedDay.entry?.eggs ?? 0 }}
-          </div>
-
-          <div v-if="selectedDay.entry?.note">
-            {{ selectedDay.entry.note }}
-          </div>
-
-          <div v-else class="text-medium-emphasis">
-            
-          </div>
-        </v-card-text>
-      </v-card>
-    </v-bottom-sheet>
   </v-container>
 </template>
 
 <script setup>
 import { onMounted, ref, computed } from 'vue';
-import { fetchReports, getDate, fetchUserData } from '../db';
+import { fetchReportsByDate, getDate, fetchUserData } from '../db';
 
 const reports = ref([]);
 const weekOffset = ref(0);
@@ -90,38 +71,51 @@ const currentWeek = ref([]);
 const userNames = ref({});
 
 onMounted(async () => {
-  reports.value = await fetchReports();
-  await loadUserNames();
-  currentWeek.value = getCurrentWeek();
-});
+  currentWeek.value = await getCurrentWeek()
+
+  console.log('Current week:', currentWeek.value)
+
+  await loadUserNames()
+})
 
 async function loadUserNames() {
+  const entries = currentWeek.value.flatMap(
+    day => day.entries || []
+  )
+
+  console.log('All entries:', entries)
+
   const userIds = [
     ...new Set(
-      reports.value
-        .map(report => report.userId)
+      entries
+        .map(entry => entry.userId || entry.id)
         .filter(Boolean)
     )
-  ];
+  ]
+
+  console.log('User IDs to load:', userIds)
 
   for (const userId of userIds) {
     try {
-      const userData = await fetchUserData(userId);
+      const userData = await fetchUserData(userId)
+
+      console.log('User data:', userId, userData)
 
       userNames.value[userId] =
-        userData.displayName || 'Unknown User';
+        userData.displayName || 'Unknown User'
     } catch (error) {
-      console.error('Could not fetch user:', userId, error);
-      userNames.value[userId] = 'Unknown User';
+      console.error('Could not fetch user:', userId, error)
+      userNames.value[userId] = 'Unknown User'
     }
   }
+
+  console.log('Loaded user names:', userNames.value)
 }
 
-function getCurrentWeek() {
+async function getCurrentWeek() {
   const today = new Date();
   const startOfWeek = new Date(today);
 
-  // Convert Sunday to 7 so Monday becomes start of week
   const day = today.getDay() || 7;
 
   startOfWeek.setDate(
@@ -131,49 +125,45 @@ function getCurrentWeek() {
   const week = [];
 
   for (let i = 0; i < 7; i++) {
-  const date = new Date(startOfWeek);
-  date.setDate(startOfWeek.getDate() + i);
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + i);
 
-  const dateId = getDate(date);
-  const reportEntry = reports.value.find(
-    entry => entry.id === dateId
-  );
+    const dateId = getDate(date);
 
-  week.push({
-    date,
-    dateId,
-    weekday: date.toLocaleDateString('sv-SE', {
-      weekday: 'short',
-    }),
-    day: date.getDate(),
-    fullDate: date.toLocaleDateString('sv-SE', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }),
-    entry: reportEntry || null,
-  });
-}
+    const entries = await fetchReportsByDate(dateId);
+
+    week.push({
+      date,
+      dateId,
+      weekday: date.toLocaleDateString('sv-SE', {
+        weekday: 'short',
+      }),
+      day: date.getDate(),
+      fullDate: date.toLocaleDateString('sv-SE', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      entries,
+    });
+  }
 
   return week;
 }
 
-function previousWeek() {
-  weekOffset.value -= 1;
-  currentWeek.value = getCurrentWeek();
+async function previousWeek() {
+  weekOffset.value -= 1
+  currentWeek.value = await getCurrentWeek()
+  await loadUserNames()
 }
 
-function nextWeek() {
+async function nextWeek() {
   if (weekOffset.value < 0) {
-    weekOffset.value += 1;
-    currentWeek.value = getCurrentWeek();
+    weekOffset.value += 1
+    currentWeek.value = await getCurrentWeek()
+    await loadUserNames()
   }
-}
-
-function openDay(day) {
-  selectedDay.value = day;
-  sheet.value = true;
 }
 
 const weekLabel = computed(() => {

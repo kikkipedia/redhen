@@ -17,12 +17,14 @@
       />
     </div>
   </div>
-
-  <!-- todo; add icon that opens a more deytailed calendar for full month-->
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useStore } from '../stores/index.js'
+import { getDate } from '../db.js'
+
+const store = useStore()
 
 function resetToToday() {
   selectedDate.value = new Date()
@@ -38,6 +40,12 @@ const formattedDate = computed(() => {
   return new Intl.DateTimeFormat('sv-SE', {
     dateStyle: 'full',
   }).format(new Date(selectedDate.value))
+})
+
+watch(selectedDate, (newDate) => {
+  if (!newDate) return
+
+  store.selectedDate = getDate(newDate)
 })
 </script>
 

@@ -192,31 +192,65 @@ export function getDate(date = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
+// Can save multiple erports for same day 
 export async function saveReport(reportData) {
-  const id = getDate();
+  const dateId = reportData.date
+  const userId = reportData.userId
+
+  if (!userId) {
+    throw new Error("User ID missing.")
+  }
 
   try {
-    const reportRef = doc(db, "reports", id);
+    const reportRef = doc(
+      db,
+      "reports",
+      dateId,
+      "entries",
+      userId
+    )
+
+    const existingReport = await getDoc(reportRef)
+
+    if (existingReport.exists()) {
+      await setDoc(
+        reportRef,
+        {
+          ...reportData,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      )
+
+      return {
+        success: true,
+        reportId: dateId,
+        updated: true,
+      }
+    }
 
     await setDoc(reportRef, {
       ...reportData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    });
+    })
 
     return {
       success: true,
-      reportId: id,
-    };
+      reportId: dateId,
+      updated: false,
+    }
+
   } catch (error) {
-    console.error("Could not save report:", error);
-    throw new Error("Could not save report.");
+    console.error("Could not save report:", error)
+    throw new Error("Could not save report.")
   }
 }
 
 export async function fetchReports() {
   try {
     const reportsSnapshot = await getDocs(collection(db, "reports"));
+    console.log('Fetched reports snapshot:', reportsSnapshot);
     const reports = reportsSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -278,5 +312,21 @@ export async function resetPassword(email) {
           error.message || "Kunde inte skicka återställningsmail."
         );
     }
+  }
+}
+
+export async function fetchReportsByDate(dateId) {
+  try {
+    const snapshot = await getDocs(
+      collection(db, "reports", dateId, "entries")
+    )
+
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+  } catch (error) {
+    console.error("Could not fetch reports:", error)
+    throw new Error("Could not fetch reports.")
   }
 }

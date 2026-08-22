@@ -21,7 +21,7 @@ onMounted(() => {
     localStorage.removeItem('uid')
     localStorage.removeItem('user')
   }
-  else {
+  else if (!store.user || !store.uid) {
     localStorage.removeItem('uid')
     localStorage.removeItem('user')
   }
