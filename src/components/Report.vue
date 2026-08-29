@@ -8,9 +8,16 @@
 
     <Calendar/>
 
-    <div v-if="!reportExists"">
+    <div v-if="!reportExists || updateReport">
+      <!-- <div class="text-h6 mb-4 text-center">
+        Rapportera 🐓
+      </div> -->
 
+      <span class="report-label">
+        🥚 Ägg:
+      </span>
     <div class="report-row mt-4">
+      
       <div class="egg-stepper">
         <v-btn
           icon="mdi-minus"
@@ -34,9 +41,7 @@
         />
       </div>
 
-      <span class="report-label">
-        🥚 Ägg
-      </span>
+      
     </div>
 
 
@@ -59,13 +64,14 @@
     </v-alert>
 
     <v-btn
+    v-if="!reportExists || updateReport"
       color="secondary"
       size="large"
       :loading="loading"
       :disabled="loading"
       @click="submitReport"
     >
-      Rapportera 🐓
+      Skicka
     </v-btn>
     </div>
     <div v-else class="text-center mt-4">
@@ -150,13 +156,16 @@ async function submitReport() {
       eggs: eggs.value,
       notes: notes.value.trim(),
       date: store.selectedDate,
-      userId: localStorage.getItem('uid') || ' ',
     }
-  console.log('Chicken report:', report)
+
     await saveReport(report)
-    successMessage.value = 'Dagens rapport har sparats.'
-    store.reportExists = true
+
+    successMessage.value = 'Rapporten har sparats.'
+
     reportExists.value = true
+    updateReport.value = false
+    store.reportExists = true
+
     resetForm()
   } catch (error) {
     console.error('Could not save report:', error)

@@ -6,9 +6,13 @@ import {
   signInWithPopup,
   updateProfile,
   sendPasswordResetEmail,
+  setPersistence,
+  browserLocalPersistence,
+  onAuthStateChanged,
+  signOut,
 } from "firebase/auth";
 
-import {doc, setDoc, serverTimestamp, getDocs, collection, addDoc, getDoc } from "firebase/firestore";
+import {doc, setDoc, serverTimestamp, getDocs, collection, addDoc, getDoc, collectionGroup, query, where } from "firebase/firestore";
 
 export async function registerUser({
   email,
@@ -79,10 +83,11 @@ export async function signInWithGoogle() {
   });
 
   try {
+    await setPersistence(auth, browserLocalPersistence);
+
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    // Creates the document for new users and updates it for returning users.
     await setDoc(
       doc(db, "users", user.uid),
       {
@@ -93,7 +98,13 @@ export async function signInWithGoogle() {
         provider: "google",
         updatedAt: serverTimestamp(),
       },
-      { merge: true },
+      { merge: true }
+    );
+
+    localStorage.setItem("uid", user.uid);
+    localStorage.setItem(
+      "user",
+      user.displayName || user.email || ""
     );
 
     return {
@@ -105,29 +116,7 @@ export async function signInWithGoogle() {
   } catch (error) {
     console.error("Google sign-in failed:", error);
 
-    switch (error.code) {
-      case "auth/popup-closed-by-user":
-        throw new Error("Google-inloggningen avbröts.");
-
-      case "auth/popup-blocked":
-        throw new Error("Webbläsaren blockerade inloggningsfönstret.");
-
-      case "auth/cancelled-popup-request":
-        throw new Error("En annan inloggning pågår redan.");
-
-      case "auth/account-exists-with-different-credential":
-        throw new Error(
-          "E-postadressen används redan med en annan inloggningsmetod.",
-        );
-
-      case "auth/unauthorized-domain":
-        throw new Error(
-          "Den här domänen är inte godkänd i Firebase Authentication.",
-        );
-
-      default:
-        throw new Error(error.message || "Google-inloggningen misslyckades.");
-    }
+    throw error;
   }
 }
 
@@ -143,20 +132,30 @@ export async function loginUser(email, password) {
   }
 
   try {
+    await setPersistence(auth, browserLocalPersistence);
+
     const userCredential = await signInWithEmailAndPassword(
       auth,
       cleanEmail,
-      password,
+      password
     );
 
     const user = userCredential.user;
 
-    return {
+    const userData = {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName || "",
       photoURL: user.photoURL || "",
     };
+
+    localStorage.setItem("uid", user.uid);
+    localStorage.setItem(
+      "user",
+      user.displayName || user.email || ""
+    );
+
+    return userData;
   } catch (error) {
     console.error("Could not log in:", error);
 
@@ -172,14 +171,18 @@ export async function loginUser(email, password) {
 
       case "auth/too-many-requests":
         throw new Error(
-          "För många misslyckade försök. Försök igen senare.",
+          "För många misslyckade försök. Försök igen senare."
         );
 
       case "auth/network-request-failed":
-        throw new Error("Nätverksfel. Kontrollera internetanslutningen.");
+        throw new Error(
+          "Nätverksfel. Kontrollera internetanslutningen."
+        );
 
       default:
-        throw new Error(error.message || "Inloggningen misslyckades.");
+        throw new Error(
+          error.message || "Inloggningen misslyckades."
+        );
     }
   }
 }
@@ -194,63 +197,60 @@ export function getDate(date = new Date()) {
 
 // Can save multiple erports for same day 
 export async function saveReport(reportData) {
-  const dateId = reportData.date
-  const userId = reportData.userId
+  const user = auth.currentUser;
 
-  if (!userId) {
-    throw new Error("User ID missing.")
+  if (!user) {
+    throw new Error("User is not authenticated.");
   }
 
+  const dateId =
+    typeof reportData.date === "string"
+      ? reportData.date
+      : getDate(reportData.date || new Date());
+
   try {
-    const reportRef = doc(
+    const entriesRef = collection(
       db,
       "reports",
       dateId,
-      "entries",
-      userId
-    )
+      "entries"
+    );
 
-    const existingReport = await getDoc(reportRef)
-
-    if (existingReport.exists()) {
-      await setDoc(
-        reportRef,
-        {
-          ...reportData,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      )
-
-      return {
-        success: true,
-        reportId: dateId,
-        updated: true,
-      }
-    }
-
-    await setDoc(reportRef, {
+    const reportRef = await addDoc(entriesRef, {
       ...reportData,
+
+      userId: user.uid,
+
+      displayName:
+        user.displayName ||
+        user.email ||
+        "Okänd användare",
+
+      date: dateId,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    })
+    });
 
     return {
       success: true,
       reportId: dateId,
-      updated: false,
-    }
-
+      entryId: reportRef.id,
+    };
   } catch (error) {
-    console.error("Could not save report:", error)
-    throw new Error("Could not save report.")
+    console.error(
+      "Could not save report:",
+      error
+    );
+
+    throw new Error(
+      "Could not save report."
+    );
   }
 }
 
 export async function fetchReports() {
   try {
     const reportsSnapshot = await getDocs(collection(db, "reports"));
-    console.log('Fetched reports snapshot:', reportsSnapshot);
+
     const reports = reportsSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -328,5 +328,80 @@ export async function fetchReportsByDate(dateId) {
   } catch (error) {
     console.error("Could not fetch reports:", error)
     throw new Error("Could not fetch reports.")
+  }
+}
+
+export async function fetchReportsForWeek(startDate, endDate) {
+  try {
+    const q = query(
+      collectionGroup(db, 'entries'),
+      where('date', '>=', startDate),
+      where('date', '<=', endDate)
+    )
+
+    const snapshot = await getDocs(q)
+
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+  } catch (error) {
+    console.error('Could not fetch weekly reports:', error)
+    throw new Error('Could not fetch weekly reports.')
+  }
+}
+
+export async function enableAuthPersistence() {
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+  } catch (error) {
+    console.error("Could not enable auth persistence:", error);
+    throw error;
+  }
+}
+
+export function watchAuthState(callback) {
+  return onAuthStateChanged(auth, (user) => {
+    if (user) {
+      callback({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || "",
+        photoURL: user.photoURL || "",
+      });
+    } else {
+      callback(null);
+    }
+  });
+}
+
+export function getCurrentUser() {
+  const user = auth.currentUser;
+
+  if (!user) {
+    return null;
+  }
+
+  return {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName || "",
+    photoURL: user.photoURL || "",
+  };
+}
+
+export async function logoutUser() {
+  try {
+    await signOut(auth);
+
+    localStorage.removeItem("uid");
+    localStorage.removeItem("user");
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Could not log out:", error);
+    throw new Error("Utloggningen misslyckades.");
   }
 }

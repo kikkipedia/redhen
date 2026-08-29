@@ -1,39 +1,69 @@
 <script setup>
 import { RouterView } from 'vue-router'
 import { onMounted, ref } from 'vue'
-
-const user = ref(null)
 import { useStore } from './stores/index.js'
+import {
+  watchAuthState,
+  enableAuthPersistence
+} from './db.js'
 
 const store = useStore()
 
-//on mounted, check if user and uid are stored in localStorage, if so, set them in the store, else, redirect to login page
-onMounted(() => {
-  const storedUser = localStorage.getItem('user')
-  const storedUid = localStorage.getItem('uid')
-  if (storedUser && storedUid) {
-    user.value = storedUser
-    //set in store
-    store.user = storedUser
-    store.uid = storedUid
-  }
-  if (storedUser == null || storedUid == null) {
-    localStorage.removeItem('uid')
-    localStorage.removeItem('user')
-  }
-  else if (!store.user || !store.uid) {
-    localStorage.removeItem('uid')
-    localStorage.removeItem('user')
-  }
-})
+const authReady = ref(false)
 
+onMounted(async () => {
+  await enableAuthPersistence()
+
+  watchAuthState((user) => {
+    if (user) {
+      store.uid = user.uid
+      store.user =
+        user.displayName ||
+        user.email ||
+        ''
+
+      localStorage.setItem(
+        'uid',
+        user.uid
+      )
+
+      localStorage.setItem(
+        'user',
+        user.displayName ||
+        user.email ||
+        ''
+      )
+    } else {
+      store.uid = null
+      store.user = null
+
+      localStorage.removeItem('uid')
+      localStorage.removeItem('user')
+    }
+
+    authReady.value = true
+  })
+})
 </script>
 
 <template>
   <v-app>
     <v-main>
-      <h2>Röda Hönans rapportsystem 🐓</h2>
-      <RouterView />
+      <h2>
+        Röda Hönans rapportsystem 🐓
+      </h2>
+
+      <RouterView v-if="authReady" />
+
+      <div
+        v-else
+        class="d-flex justify-center pa-6"
+      >
+        <v-progress-circular
+          indeterminate
+          color="primary"
+        />
+      </div>
     </v-main>
   </v-app>
 </template>

@@ -100,4 +100,21 @@ const scheduleOpen = ref(false)
 
   -webkit-overflow-scrolling: touch;
 }
+
+.reports-card {
+  max-width: 90%;
+  max-height: 90dvh;
+}
+
+:deep(.v-overlay__content) {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.reports-card {
+  width: 90%;
+  max-width: 600px;
+  max-height: 90dvh;
+}
 </style>
