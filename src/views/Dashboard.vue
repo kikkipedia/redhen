@@ -48,29 +48,31 @@
     </v-overlay>
 
     <v-overlay
-        v-model="reportsOpen"
-        persistent
-    >
-    <v-card
-      class="align-center justify-center pa-1 ma-4 reports-card"
-      rounded="lg"
-      elevation="3"
-    >
-      <v-card-text>
-        <Reports/>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer />
-        <v-btn
-          color="secondary"
-          variant="outlined"
-          @click="reportsOpen = false"
-        >
-          Stäng
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-overlay>
+  v-model="reportsOpen"
+  persistent
+>
+  <v-card
+    class="pa-1 reports-card"
+    rounded="lg"
+    elevation="3"
+  >
+    <v-card-text class="reports-content">
+      <Reports />
+    </v-card-text>
+
+    <v-card-actions>
+      <v-spacer />
+
+      <v-btn
+        color="secondary"
+        variant="outlined"
+        @click="reportsOpen = false"
+      >
+        Stäng
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</v-overlay>
 </template>
 
 
@@ -102,19 +104,25 @@ const scheduleOpen = ref(false)
 }
 
 .reports-card {
-  max-width: 90%;
-  max-height: 90dvh;
+  width: 90%;
+  max-width: 600px;
+  height: 90dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.reports-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 :deep(.v-overlay__content) {
   width: 100%;
   display: flex;
   justify-content: center;
-}
-
-.reports-card {
-  width: 90%;
-  max-width: 600px;
-  max-height: 90dvh;
+  align-items: center;
+  padding-top: 12px;
 }
 </style>

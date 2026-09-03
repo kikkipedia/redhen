@@ -253,11 +253,6 @@ const weekLabel = computed(() => {
   width: 100%;
 }
 
-.scrollable {
-  overflow-y: auto;
-  max-height: 70%;
-}
-
 .report-entry {
   font-size: 12px !important;
 }
