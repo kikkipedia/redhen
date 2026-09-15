@@ -15,7 +15,8 @@
         <v-fab
             icon="mdi-finance"
             color="secondary"
-            variant="plain"
+            variant="text"
+            @click="statsOpen = !statsOpen"
         />
     </nav>
     <Report/>
@@ -73,6 +74,33 @@
     </v-card-actions>
   </v-card>
 </v-overlay>
+
+<v-overlay
+  v-model="statsOpen"
+  persistent
+>
+  <v-card
+    class="pa-1 stats-card"
+    rounded="lg"
+    elevation="3"
+  >
+    <v-card-text class="stats-content">
+      <Stats />
+    </v-card-text>
+
+    <v-card-actions>
+      <v-spacer />
+
+      <v-btn
+        color="secondary"
+        variant="outlined"
+        @click="statsOpen = false"
+      >
+        Stäng
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</v-overlay>
 </template>
 
 
@@ -81,9 +109,11 @@ import Schedule from '@/components/Schedule.vue';
 import { ref } from 'vue'
 import Report from '@/components/Report.vue';
 import Reports from '@/views/Reports.vue'
+import Stats from '@/components/Stats.vue';
 
 const reportsOpen = ref(false)
 const scheduleOpen = ref(false)
+const statsOpen = ref(false)
 </script>
 
 <style scoped>
@@ -112,6 +142,23 @@ const scheduleOpen = ref(false)
 }
 
 .reports-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.stats-card {
+  width: 90%;
+  max-width: 600px;
+  height: 90dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+
+
+.stats-content {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
