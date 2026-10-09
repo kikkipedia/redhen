@@ -2,6 +2,9 @@
   <div class="statistics">
     <canvas ref="weekly"></canvas>
   </div>
+  <div class="monthly-chart">
+    <canvas ref="monthly"></canvas>
+  </div>
 </template>
 
 
@@ -9,7 +12,7 @@
 import { onMounted, ref } from 'vue'
 import Chart from 'chart.js/auto'
 import { useStore } from '../stores/index.js'
-import { fetchReportsForWeek } from '../db.js'
+import { fetchReportsForWeek, fetchReportsForRange } from '../db.js'
 import { getDate } from '../db.js'
 
 const store = useStore()
@@ -17,11 +20,14 @@ const store = useStore()
 const weekly = ref(null)
 const weekNumbers = ref([])
 const weeklyEggs = ref([])
+const monthly = ref(null)
+
 
 let chart = null
 
 onMounted(async () => {
   await loadStatistics()
+  await createMonthlyChart()
 })
 
 async function loadStatistics() {
@@ -188,10 +194,130 @@ function createChart() {
     },
   })
 }
+
+function getLast6months() {
+  const today = new Date()
+  const months = []
+
+  for (let i = 5; i >= 0; i--) {
+    const month = new Date(
+      today.getFullYear(),
+      today.getMonth() - i,
+      1
+    )
+
+    const year = month.getFullYear()
+    const monthIndex = month.getMonth()
+
+    const startDate = new Date(
+      year,
+      monthIndex,
+      1
+    )
+
+    const endDate = new Date(
+      year,
+      monthIndex + 1,
+      0
+    )
+
+    months.push({
+      key: `${year}-${String(monthIndex + 1).padStart(2, '0')}`,
+
+      label: month.toLocaleDateString('sv-SE', {
+        month: 'short',
+        year: 'numeric',
+      }),
+
+      startDate: getDate(startDate),
+      endDate: getDate(endDate),
+    })
+  }
+
+  return months
+}
+
+async function loadMonthlyData() {
+  const months = getLast6months()
+
+  const reports = await fetchReportsForRange(
+    months[0].startDate,
+    months[months.length - 1].endDate
+  )
+
+  const monthlyEggs = months.map(month => {
+    return reports
+      .filter(report => {
+        return (
+          report.date >= month.startDate &&
+          report.date <= month.endDate
+        )
+      })
+      .reduce(
+        (sum, report) =>
+          sum + Number(report.eggs || 0),
+        0
+      )
+  })
+
+  return {
+    labels: months.map(month => month.label),
+    eggs: monthlyEggs,
+  }
+}
+
+async function createMonthlyChart() {
+  const data = await loadMonthlyData()
+
+  const ctx = monthly.value.getContext('2d')
+
+  new Chart(ctx, {
+    type: 'line',
+
+    data: {
+      labels: data.labels,
+
+      datasets: [
+        {
+          label: 'Ägg per månad',
+          data: data.eggs,
+          borderColor: '#c52850',
+          backgroundColor: 'rgba(197, 40, 80, 0.15)',
+          tension: 0.3,
+          fill: false,
+        },
+      ],
+    },
+
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0,
+          },
+        },
+      },
+    },
+  })
+}
 </script>
 
 <style scoped>
 .statistics {
+  width: 100%;
+  height: 300px;
+}
+
+.monthly-chart {
   width: 100%;
   height: 300px;
 }

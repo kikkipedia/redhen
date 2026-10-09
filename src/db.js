@@ -405,3 +405,23 @@ export async function logoutUser() {
     throw new Error("Utloggningen misslyckades.");
   }
 }
+
+export async function fetchReportsForRange(startDate, endDate) {
+  try {
+    const q = query(
+      collectionGroup(db, 'entries'),
+      where('date', '>=', startDate),
+      where('date', '<=', endDate)
+    )
+
+    const snapshot = await getDocs(q)
+
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+  } catch (error) {
+    console.error('Could not fetch reports:', error)
+    throw new Error('Could not fetch reports.')
+  }
+}
